@@ -1,0 +1,77 @@
+const int TEMP_SENSOR_PIN = A0;
+const int LDR_SENSOR_PIN = A1;
+const int RED_PIN = 9;
+const int GREEN_PIN = 10;
+const int BLUE_PIN = 11;
+
+#define LIGHT_MSG "Nivel de luz actual: "
+#define TEMP_MSG "Temperatura actual: "
+
+#define TEMPERATURE_HIGH 90    // Temperatura alta (en °C)
+#define TEMPERATURE_LOW 18     // Temperatura baja (en °C)
+#define LIGHT_MIN 30           // Límite inferior de luz ambiental (30%)
+#define LIGHT_MAX 70           // Límite superior de luz ambiental (70%)
+
+void setup() {
+  Serial.begin(9600);
+  
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
+  pinMode(BLUE_PIN, OUTPUT);
+  
+  digitalWrite(RED_PIN, LOW);
+  digitalWrite(GREEN_PIN, LOW);
+  digitalWrite(BLUE_PIN, LOW);
+}
+
+void loop() {
+  int lightValue = analogRead(LDR_SENSOR_PIN);
+  int tempValue = analogRead(TEMP_SENSOR_PIN);
+
+  float lightPercentage = map(lightValue, 0, 1023, 0, 100);
+  
+  Serial.print("Valor de luz: ");
+  Serial.println(lightValue);
+  Serial.println(lightPercentage);
+
+  float temperatureC = (tempValue * (5.0 / 1023.0) * 100.0);
+  
+  Serial.print("Valor de temperatura (raw): ");
+  Serial.println(tempValue);
+  Serial.println(temperatureC);
+  
+  Serial.println(F(LIGHT_MSG));  
+  Serial.println(lightPercentage);
+  Serial.println(F(TEMP_MSG));  
+  Serial.print(temperatureC);
+  Serial.println(F(" ºC"));
+
+  if (lightPercentage >= LIGHT_MIN && lightPercentage <= LIGHT_MAX) {
+   
+    if (temperatureC > TEMPERATURE_HIGH) {
+      
+      digitalWrite(RED_PIN, HIGH);
+      digitalWrite(GREEN_PIN, LOW);
+      digitalWrite(BLUE_PIN, LOW);
+    }
+    else if (temperatureC < TEMPERATURE_LOW) {
+      
+      digitalWrite(RED_PIN, LOW);
+      digitalWrite(GREEN_PIN, LOW);
+      digitalWrite(BLUE_PIN, HIGH);
+    }
+    else {
+      
+      digitalWrite(RED_PIN, LOW);
+      digitalWrite(GREEN_PIN, HIGH);
+      digitalWrite(BLUE_PIN, LOW);
+    }
+  } else {
+
+    digitalWrite(RED_PIN, LOW);
+    digitalWrite(GREEN_PIN, LOW);
+    digitalWrite(BLUE_PIN, LOW);
+  }
+
+  delay(1000);
+}
