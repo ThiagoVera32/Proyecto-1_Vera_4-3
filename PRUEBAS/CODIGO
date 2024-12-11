@@ -1,0 +1,147 @@
+/* 
+  Proyecto: Control de LEDs RGB con botón y potenciómetro
+  Descripción: Cambia la secuencia de colores de los LEDs RGB 
+               según si se presiona o no el botón. La velocidad 
+               se ajusta con un potenciómetro.
+*/
+
+// ------ Definición de los pines ------
+
+// Pin donde está conectado el botón
+const int botonPin = 2;  
+
+// Pin donde está conectado el potenciómetro
+const int potPin = A0;  
+
+// Pines para el primer LED RGB (rojo, verde, azul)
+const int led1_R = 3; 
+const int led1_G = 5; 
+const int led1_B = 6; 
+
+// Pines para el segundo LED RGB (rojo, verde, azul)
+const int led2_R = 9; 
+const int led2_G = 10; 
+const int led2_B = 11; 
+
+// ------ Variables para controlar el estado ------
+
+int estadoBoton = 0;     // Aquí se guarda si el botón está presionado o no (0 o 1)
+int velocidad = 500;     // Tiempo de espera entre colores (inicia en 500 ms)
+
+// Colores de la secuencia (valores de R, G, B)
+struct Color {
+  int R;
+  int G;
+  int B;
+};
+
+// Secuencia de colores (naranja, magenta, rojo y amarillo)
+Color secuencia[] = {
+  {200, 100, 0},  // Naranja (Rojo fuerte + Verde medio)
+  {255, 0, 255},  // Magenta (Rojo fuerte + Azul fuerte)
+  {255, 0, 0},    // Rojo
+  {255, 255, 0}   // Amarillo (Rojo fuerte + Verde fuerte)
+};
+
+// Cantidad de colores en la secuencia
+const int numColores = sizeof(secuencia) / sizeof(secuencia[0]);
+
+void setup() {
+  // Configurar el pin del botón como entrada (con resistencia pull-up para que no flote)
+  pinMode(botonPin, INPUT_PULLUP); 
+  
+  // Configurar el pin del potenciómetro como entrada
+  pinMode(potPin, INPUT); 
+  
+  // Configurar los pines de los LEDs como salida
+  pinMode(led1_R, OUTPUT);
+  pinMode(led1_G, OUTPUT);
+  pinMode(led1_B, OUTPUT);
+  
+  pinMode(led2_R, OUTPUT);
+  pinMode(led2_G, OUTPUT);
+  pinMode(led2_B, OUTPUT);
+  
+  // Iniciar la comunicación con la computadora para ver mensajes en la consola
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Leer el estado del botón (0 = presionado, 1 = no presionado)
+  estadoBoton = digitalRead(botonPin);
+  
+  // Leer el valor del potenciómetro (de 0 a 1023) y convertirlo a un tiempo de 50 a 600 ms
+  int valorPot = analogRead(potPin);
+  velocidad = map(valorPot, 0, 1023, 50, 600);
+
+  if (estadoBoton == LOW) {
+    // Si el botón está presionado, encender el LED 1
+    mostrarSecuencia(1, led1_R, led1_G, led1_B);
+  } else {
+    // Si el botón no está presionado, encender el LED 2
+    mostrarSecuencia(2, led2_R, led2_G, led2_B);
+  }
+}
+
+/**
+ * Mostrar la secuencia de colores en el LED indicado.
+ * @param ledNumero Número del LED (1 o 2)
+ * @param pinR Pin de la parte roja del LED
+ * @param pinG Pin de la parte verde del LED
+ * @param pinB Pin de la parte azul del LED
+ */
+void mostrarSecuencia(int ledNumero, int pinR, int pinG, int pinB) {
+  for (int i = 0; i < numColores; i++) {
+    // Tomar el color actual de la secuencia
+    Color colorActual = secuencia[i];
+    
+    // Mostrar el color en el LED (poniendo valores de R, G, B)
+    analogWrite(pinR, colorActual.R);
+    analogWrite(pinG, colorActual.G);
+    analogWrite(pinB, colorActual.B);
+    
+    // Mostrar la información en la consola
+    String nombreColor = obtenerNombreColor(i);
+    Serial.print("Led ");
+    Serial.print(ledNumero);
+    Serial.print(" - ");
+    Serial.print(velocidad);
+    Serial.print("ms - ");
+    Serial.println(nombreColor);
+    
+    // Esperar la cantidad de tiempo definida por el usuario con el potenciómetro
+    delay(velocidad);
+  }
+  
+  // Apagar el LED después de la secuencia
+  apagarLED(pinR, pinG, pinB);
+}
+
+/**
+ * Obtener el nombre del color de la secuencia
+ * @param indice Índice del color en la secuencia
+ * @return Nombre del color
+ */
+String obtenerNombreColor(int indice) {
+  // Retorna el nombre del color dependiendo de su índice
+  switch (indice) {
+    case 0: return "naranja";
+    case 1: return "magenta";
+    case 2: return "rojo";
+    case 3: return "amarillo";
+    default: return "desconocido";
+  }
+}
+
+/**
+ * Apagar el LED RGB
+ * @param pinR Pin de la parte roja
+ * @param pinG Pin de la parte verde
+ * @param pinB Pin de la parte azul
+ */
+void apagarLED(int pinR, int pinG, int pinB) {
+  // Poner todos los colores en 0 para apagar el LED
+  analogWrite(pinR, 0);
+  analogWrite(pinG, 0);
+  analogWrite(pinB, 0);
+}
